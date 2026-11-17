@@ -1,0 +1,81 @@
+name: Create Jira issue (approved)
+
+on:
+  workflow_dispatch:
+    inputs:
+      summary:
+        description: Public issue summary. Do not enter secrets, personal, or confidential data.
+        required: true
+        type: string
+      description:
+        description: Public issue description. The review summary is visible in this public repository; use fabricated or public information only.
+        required: true
+        type: string
+      issue_type:
+        description: Jira issue type configured for the project
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jira-issue-write
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: github.ref == 'refs/heads/main'
+    name: Review Jira issue payload
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the protected default branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Display issue details for approval
+        env:
+          JIRA_PROJECT_KEY: CART
+          ISSUE_TYPE: ${{ inputs.issue_type }}
+          ISSUE_SUMMARY: ${{ inputs.summary }}
+          ISSUE_DESCRIPTION: ${{ inputs.description }}
+        run: node .github/scripts/jira-issue-preview.mjs
+
+  create-issue:
+    if: github.ref == 'refs/heads/main'
+    name: Create approved Jira issue
+    needs: preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: jira-write
+    steps:
+      - name: Check out the protected default branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Create Jira issue
+        env:
+          JIRA_SITE_URL: https://jenny312198.atlassian.net
+          JIRA_CLOUD_ID: 6a7835c3-929a-4f29-9778-8ede3f342013
+          JIRA_PROJECT_KEY: CART
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          ISSUE_TYPE: ${{ inputs.issue_type }}
+          ISSUE_SUMMARY: ${{ inputs.summary }}
+          ISSUE_DESCRIPTION: ${{ inputs.description }}
+        run: node .github/scripts/create-jira-issue.mjs
