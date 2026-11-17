@@ -8,5 +8,6 @@
 
 - [帳號與角色權限](./accounts-and-roles.md)
 - [訂單與退款](./orders-and-refunds.md)
+- [常見問題關鍵字查詢](./faq-search.md)
 - [AI 協作開發工作流](./ai-assisted-development-workflow.md)
 - [雲端 AI 工具整合](./ai-tooling-integrations.md)
